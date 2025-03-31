@@ -369,11 +369,12 @@ const QigongCalculator = () => {
     // Determine progress color
     const getProgressColor = () => {
         const percentComplete = (currentEnergy / targetEnergy) * 100;
-        if (percentComplete >= 100) return "bg-green-500";
-        if (percentComplete >= 75) return "bg-green-400";
-        if (percentComplete >= 50) return "bg-yellow-400";
-        if (percentComplete >= 25) return "bg-yellow-500";
-        return "bg-red-500";
+        // New palette: teal/emerald shades
+        if (percentComplete >= 100) return "bg-emerald-500";
+        if (percentComplete >= 75) return "bg-teal-500";
+        if (percentComplete >= 50) return "bg-teal-400";
+        if (percentComplete >= 25) return "bg-emerald-400";
+        return "bg-emerald-300"; // Base color
     };
 
     // Determine progress message
@@ -563,24 +564,24 @@ const QigongCalculator = () => {
     }
 
     return (
-        <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
-            <h1 className="text-2xl font-bold text-center mb-4">
+        <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-lg my-8">
+            <h1 className="text-3xl font-bold text-center mb-4 text-emerald-800">
                 Qigong Energy Tracker
             </h1>
-            <div className="text-center text-gray-600 mb-6">
+            <div className="text-center text-stone-600 mb-6">
                 Track your qigong energy growth through consistent practice
             </div>
 
             {/* Configuration Panel - Replaced with Stopwatch */}
-            <div className="bg-gray-100 p-4 rounded-lg mb-6">
-                <h2 className="text-lg font-semibold mb-3">
+            <div className="bg-stone-100 p-4 rounded-lg mb-6 shadow-sm">
+                <h2 className="text-lg font-semibold mb-3 text-stone-700">
                     Practice Timer (Day {currentDay})
                 </h2>
                 <div className="space-y-3 text-center">
-                    <div className="text-4xl font-mono font-semibold text-blue-600">
+                    <div className="text-4xl font-mono font-semibold text-emerald-700">
                         {formatTime(accumulatedSecondsToday + elapsedTime)}
                     </div>
-                    <div className="text-lg font-semibold text-gray-500">
+                    <div className="text-lg font-semibold text-stone-500">
                         {isPracticing
                             ? "Practice in progress..."
                             : accumulatedSecondsToday > 0
@@ -594,21 +595,21 @@ const QigongCalculator = () => {
                     {isPracticing ? (
                         <button
                             onClick={handleEndPractice}
-                            className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded"
+                            className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-4 rounded transition duration-150 ease-in-out shadow-md"
                         >
                             Pause Practice
                         </button>
                     ) : (
                         <button
                             onClick={handleStartPractice}
-                            className={`w-full font-bold py-3 px-4 rounded bg-green-500 hover:bg-green-600 text-white`}
+                            className={`w-full font-bold py-3 px-4 rounded bg-emerald-600 hover:bg-emerald-700 text-white transition duration-150 ease-in-out shadow-md`}
                         >
                             {accumulatedSecondsToday > 0
                                 ? "Resume Practice"
                                 : "Start Practice"}
                         </button>
                     )}
-                    <div className="text-xs text-gray-500 italic mt-2">
+                    <div className="text-xs text-stone-500 italic mt-2">
                         {isPracticing
                             ? "Press 'Pause Practice' when taking a break or finished for the session."
                             : "Press 'Start/Resume Practice' to time your session(s)."}
@@ -618,10 +619,10 @@ const QigongCalculator = () => {
 
             {/* Current Progress */}
             <div className="mb-6">
-                <h2 className="text-lg font-semibold mb-2">
+                <h2 className="text-lg font-semibold mb-2 text-stone-700">
                     Current Energy Level
                 </h2>
-                <div className="bg-gray-200 rounded-full h-6 overflow-hidden">
+                <div className="bg-stone-200 rounded-full h-6 overflow-hidden">
                     <div
                         className={`h-full ${getProgressColor()} transition-all duration-500`}
                         style={{
@@ -633,22 +634,22 @@ const QigongCalculator = () => {
                     ></div>
                 </div>
                 <div className="mt-2 flex justify-between">
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-stone-600">
                         Day {currentDay}
                     </span>
-                    <span className="text-sm font-medium">
+                    <span className="text-sm font-medium text-stone-700">
                         {currentEnergy.toFixed(1)} / {targetEnergy} energy
                         points
                     </span>
                 </div>
-                <div className="mt-1 text-center font-medium text-lg">
+                <div className="mt-1 text-center font-medium text-lg text-emerald-700">
                     {getProgressMessage()}
                 </div>
             </div>
 
             {/* Practice Tracking - REMOVE Log Practice Button, Combine Skip/Next Day */}
-            <div className="mb-6 border rounded-lg p-4">
-                <h2 className="text-lg font-semibold mb-3">
+            <div className="mb-6 border border-stone-200 rounded-lg p-4 shadow-sm">
+                <h2 className="text-lg font-semibold mb-3 text-stone-700">
                     End of Day (Day {currentDay})
                 </h2>
                 {/* Show Skip OR Next Day Button */}
@@ -662,13 +663,13 @@ const QigongCalculator = () => {
                             }
                             className={`font-bold py-3 px-4 rounded w-full ${
                                 isPracticing || accumulatedSecondsToday > 0
-                                    ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                                    : "bg-red-500 hover:bg-red-600 text-white"
+                                    ? "bg-stone-300 text-stone-500 cursor-not-allowed"
+                                    : "bg-orange-600 hover:bg-orange-700 text-white transition duration-150 ease-in-out shadow-md"
                             }`}
                         >
                             Skip Day & Advance
                         </button>
-                        <div className="text-sm text-gray-600 italic text-center">
+                        <div className="text-sm text-stone-600 italic text-center">
                             {isPracticing && "Pause timer before skipping."}
                             {accumulatedSecondsToday > 0 &&
                                 "Cannot skip after practicing."}
@@ -679,7 +680,7 @@ const QigongCalculator = () => {
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        <div className="text-center text-green-700 font-medium">
+                        <div className="text-center text-emerald-700 font-medium">
                             Day {currentDay} activity recorded! (
                             {dailyLog.find((d) => d.day === currentDay)
                                 ?.practice
@@ -696,12 +697,12 @@ const QigongCalculator = () => {
                             className={`w-full font-bold py-3 px-4 rounded ${
                                 isPracticing
                                     ? "bg-gray-400 cursor-not-allowed"
-                                    : "bg-blue-500 hover:bg-blue-600 text-white"
+                                    : "bg-teal-600 hover:bg-teal-700 text-white"
                             }`}
                         >
                             Finish Day & Advance
                         </button>
-                        <div className="text-sm text-gray-600 italic text-center">
+                        <div className="text-sm text-stone-600 italic text-center">
                             {isPracticing && "Pause timer before advancing."}
                             {!isPracticing && "Ready for the next day."}
                         </div>
@@ -710,14 +711,14 @@ const QigongCalculator = () => {
             </div>
 
             {/* Simulation Tools */}
-            <div className="mb-6 border rounded-lg p-4">
-                <h2 className="text-lg font-semibold mb-3">
+            <div className="mb-6 border border-stone-200 rounded-lg p-4 shadow-sm">
+                <h2 className="text-lg font-semibold mb-3 text-stone-700">
                     Practice Tracker Tools
                 </h2>
                 <div className="grid grid-cols-1 gap-3">
                     <button
                         onClick={resetSimulation}
-                        className="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded"
+                        className="bg-stone-500 hover:bg-stone-600 text-white font-medium py-2 px-4 rounded transition duration-150 ease-in-out shadow-sm"
                     >
                         Reset Energy Tracker
                     </button>
@@ -727,7 +728,7 @@ const QigongCalculator = () => {
             {/* Energy Chart */}
             {dailyLog.length > 0 && (
                 <div className="mb-6">
-                    <h2 className="text-lg font-semibold mb-3">
+                    <h2 className="text-lg font-semibold mb-3 text-stone-700">
                         Energy Progression
                     </h2>
                     <div className="h-64">
@@ -762,9 +763,9 @@ const QigongCalculator = () => {
                                 <Line
                                     type="monotone"
                                     dataKey="energy"
-                                    stroke="#2563eb"
+                                    stroke="#0d9488"
                                     activeDot={{ r: 8 }}
-                                    dot={{ r: 3 }}
+                                    dot={{ r: 3, fill: "#0d9488" }}
                                 />
                             </LineChart>
                         </ResponsiveContainer>
@@ -775,59 +776,55 @@ const QigongCalculator = () => {
             {/* Practice Log - Modified for editing */}
             {dailyLog.length > 0 && (
                 <div>
-                    <h2 className="text-lg font-semibold mb-3">
+                    <h2 className="text-lg font-semibold mb-3 text-stone-700">
                         Practice History
                     </h2>
-                    <div className="overflow-auto max-h-[300px] border rounded">
-                        {" "}
-                        {/* Increased max-height slightly */}
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50 sticky top-0 z-10">
-                                {/* Added z-index */}
+                    <div className="overflow-auto max-h-[300px] border border-stone-200 rounded shadow-sm">
+                        <table className="min-w-full divide-y divide-stone-200">
+                            <thead className="bg-stone-100 sticky top-0 z-10">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">
                                         Day
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">
                                         Activity
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                                        {/* Added fixed width */}
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider w-24">
                                         Minutes
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">
                                         Energy Multiplier
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">
                                         Total Energy
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="bg-white divide-y divide-stone-200">
                                 {dailyLog.map((log) => (
                                     <tr
                                         key={log.day}
                                         className={
                                             log.practice
-                                                ? "bg-green-50"
-                                                : "bg-red-50"
+                                                ? "bg-emerald-50"
+                                                : "bg-orange-50"
                                         }
                                     >
-                                        <td className="px-6 py-2 whitespace-nowrap">
+                                        <td className="px-6 py-2 whitespace-nowrap text-stone-700">
                                             {log.day}
                                         </td>
                                         <td className="px-6 py-2 whitespace-nowrap">
                                             {log.practice ? (
-                                                <span className="text-green-600">
+                                                <span className="text-emerald-700">
                                                     Practiced
                                                 </span>
                                             ) : (
-                                                <span className="text-red-600">
+                                                <span className="text-orange-700">
                                                     Skipped
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="px-6 py-2 whitespace-nowrap">
+                                        <td className="px-6 py-2 whitespace-nowrap text-stone-700">
                                             {log.practice ? (
                                                 editingDay === log.day ? (
                                                     <input
@@ -862,7 +859,7 @@ const QigongCalculator = () => {
                                                             }
                                                         }}
                                                         className="w-16 text-center rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-1"
-                                                        autoFocus // Focus the input when it appears
+                                                        autoFocus
                                                     />
                                                 ) : (
                                                     <span
@@ -871,7 +868,7 @@ const QigongCalculator = () => {
                                                                 log.day
                                                             )
                                                         }
-                                                        className="cursor-pointer hover:text-blue-600" // Restore className
+                                                        className="cursor-pointer hover:text-teal-600 text-stone-700"
                                                     >
                                                         {log.minutes}
                                                     </span>
@@ -885,7 +882,7 @@ const QigongCalculator = () => {
                                         <td className="px-6 py-2 whitespace-nowrap">
                                             {log.practice ? (
                                                 <span
-                                                    className="text-blue-600"
+                                                    className="text-teal-600"
                                                     title={`Actual gain: +${log.gain?.toFixed(
                                                         2
                                                     )} energy`}
@@ -898,7 +895,7 @@ const QigongCalculator = () => {
                                                 </span>
                                             ) : (
                                                 <span
-                                                    className="text-gray-500"
+                                                    className="text-stone-500"
                                                     title={`Lost: ${log.loss?.toFixed(
                                                         2
                                                     )} energy (${(
@@ -909,7 +906,7 @@ const QigongCalculator = () => {
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="px-6 py-2 whitespace-nowrap font-medium">
+                                        <td className="px-6 py-2 whitespace-nowrap font-medium text-stone-800">
                                             {log.energy}
                                         </td>
                                     </tr>
