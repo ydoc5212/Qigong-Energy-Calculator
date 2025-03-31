@@ -162,6 +162,7 @@ const QigongCalculator = () => {
     // Start Practice Handler
     const handleStartPractice = () => {
         if (isPracticing) return;
+        // Original logic: Start time based on current interval's elapsed time (if any)
         setStartTime(Date.now() - elapsedTime * 1000);
         setIsPracticing(true);
     };
@@ -170,15 +171,21 @@ const QigongCalculator = () => {
     const handleEndPractice = async () => {
         if (!isPracticing || !startTime) return;
 
+        // Stop the timer *first*
         if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
         }
 
+        // Calculate the duration of the interval *just completed*
         const endTime = Date.now();
         const currentIntervalSeconds = Math.floor((endTime - startTime) / 1000);
+
+        // Add this interval's duration to the total accumulated for the day
         const newAccumulatedSeconds =
             accumulatedSecondsToday + currentIntervalSeconds;
+
+        // Use the new total accumulated seconds for energy calculation
         const totalMinutesToday = Math.max(
             1,
             Math.round(newAccumulatedSeconds / 60)
@@ -217,6 +224,10 @@ const QigongCalculator = () => {
 
         // Update the main current energy state
         setCurrentEnergy(newTotalEnergyToday);
+
+        // Reset elapsedTime *before* updating accumulatedSeconds to prevent display flicker
+        setElapsedTime(0);
+        // Update accumulated seconds state *with the new total*
         setAccumulatedSecondsToday(newAccumulatedSeconds);
 
         // Prepare log entry
@@ -261,7 +272,6 @@ const QigongCalculator = () => {
         // Reset timer state, ready for potential restart
         setIsPracticing(false);
         setStartTime(null);
-        setElapsedTime(0);
     };
 
     // Log a skipped day
