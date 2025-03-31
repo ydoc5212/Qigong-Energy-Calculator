@@ -21,6 +21,7 @@ const QigongCalculator = () => {
     const [accumulatedSecondsToday, setAccumulatedSecondsToday] = useState(0); // New state for total seconds
     const intervalRef = useRef(null); // To hold the interval ID
     const [isLoading, setIsLoading] = useState(true); // Add loading state
+    const [hoveredRowDay, setHoveredRowDay] = useState(null); // State for hover effect
 
     // Constants
     const targetEnergy = 100;
@@ -381,12 +382,12 @@ const QigongCalculator = () => {
     const getProgressMessage = () => {
         const percentComplete = (currentEnergy / targetEnergy) * 100;
 
-        if (percentComplete >= 150) return "Extraordinary Mastery!";
-        if (percentComplete >= 100) return "Goal Achieved!";
-        if (percentComplete >= 75) return "Excellent Progress";
-        if (percentComplete >= 50) return "Good Progress";
-        if (percentComplete >= 25) return "Building Foundation";
-        if (percentComplete > 0) return "Beginning Journey";
+        if (percentComplete >= 150) return "Extraordinary Mastery! 🌟";
+        if (percentComplete >= 100) return "Goal Achieved! 💫";
+        if (percentComplete >= 75) return "Excellent Progress 🌲✨";
+        if (percentComplete >= 50) return "Good Progress 🌲";
+        if (percentComplete >= 25) return "Building Foundation 🪵";
+        if (percentComplete > 0) return "Beginning Journey 🌱";
         return "Start Your Practice";
     };
 
@@ -551,6 +552,92 @@ const QigongCalculator = () => {
         await recalculateEnergyFromDay(targetIndex, logCopyWithEdit);
 
         setEditingDay(null); // Exit editing mode after successful recalculation and save
+    };
+
+    // Handle deleting a specific day
+    const handleDeleteDay = async (dayToDelete, indexToDelete) => {
+        if (
+            !window.confirm(
+                `Are you sure you want to delete Day ${dayToDelete}? This will recalculate all subsequent days.`
+            )
+        ) {
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            // Delete from Supabase
+            console.log(
+                `Attempting to delete Day ${dayToDelete} from Supabase...`
+            );
+            const { error: deleteError } = await supabase
+                .from("calculations")
+                .delete()
+                .eq("day", dayToDelete);
+
+            if (deleteError) {
+                console.error(
+                    `Error deleting Day ${dayToDelete} from Supabase:`,
+                    deleteError
+                );
+                alert(
+                    `Failed to delete Day ${dayToDelete}. Please check the console.`
+                );
+                throw deleteError; // Throw to prevent further processing
+            }
+            console.log(
+                `Successfully deleted Day ${dayToDelete} from Supabase.`
+            );
+
+            // Filter out the deleted day locally
+            const logAfterDelete = dailyLog.filter(
+                (log) => log.day !== dayToDelete
+            );
+
+            // Re-assign day numbers sequentially for the remaining logs
+            // This is crucial if the `day` column itself is used for ordering/joins later
+            // Though maybe not strictly necessary if recalculate handles indices correctly?
+            // For now, let's keep it simple and recalculate based on index.
+            /* // Example of re-assigning days (Consider if needed)
+            const finalLog = logAfterDelete.map((log, index) => ({
+                 ...log,
+                 day: index + 1 // Assuming first day is 1
+             }));
+            */
+            const finalLog = logAfterDelete; // Keep original day numbers for now, recalculate handles sequence
+
+            // Recalculate from the index where the item was deleted
+            // If there are any days left after the deleted one
+            if (indexToDelete < finalLog.length) {
+                console.log(
+                    `Recalculating energy from index ${indexToDelete} after deleting Day ${dayToDelete}.`
+                );
+                // Pass the log *after* deletion to the recalculation function
+                await recalculateEnergyFromDay(indexToDelete, finalLog);
+            } else {
+                // If the last day was deleted, just update the state with the filtered log
+                // and potentially reset currentEnergy based on the new last day
+                console.log(
+                    `Deleted the last day (Day ${dayToDelete}). Updating local state.`
+                );
+                setDailyLog(finalLog);
+                const newLastDay =
+                    finalLog.length > 0 ? finalLog[finalLog.length - 1] : null;
+                setCurrentEnergy(newLastDay ? newLastDay.energy : 1); // Reset to 1 if log is empty
+                // We still need to update Supabase for any remaining days if their day numbers were reassigned
+                // but since we are NOT reassigning days currently, this else block is simpler.
+            }
+
+            // Note: recalculateEnergyFromDay already calls setIsLoading(false) at the end
+            // Ensure it's called even if we don't recalculate (last day deleted scenario)
+            if (indexToDelete >= finalLog.length) {
+                setIsLoading(false);
+            }
+        } catch (error) {
+            console.error("Error during delete day process:", error);
+            // Alert added inside the try block for specific errors
+            setIsLoading(false);
+        }
     };
 
     // Determine if any practice has happened today (used for button logic)
@@ -798,20 +885,29 @@ const QigongCalculator = () => {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">
                                         Total Energy
                                     </th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-stone-500 uppercase tracking-wider">
+                                        {/* Action column header */}
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-stone-200">
-                                {dailyLog.map((log) => (
+                                {dailyLog.map((log, index) => (
                                     <tr
                                         key={log.day}
-                                        className={
+                                        className={`transition-colors duration-150 ${
                                             log.practice
-                                                ? "bg-emerald-50"
-                                                : "bg-orange-50"
+                                                ? "bg-emerald-50 hover:bg-emerald-100"
+                                                : "bg-orange-50 hover:bg-orange-100"
+                                        }`}
+                                        onMouseEnter={() =>
+                                            setHoveredRowDay(log.day)
+                                        }
+                                        onMouseLeave={() =>
+                                            setHoveredRowDay(null)
                                         }
                                     >
                                         <td className="px-6 py-2 whitespace-nowrap text-stone-700">
-                                            {log.day}
+                                            <span>{log.day}</span>
                                         </td>
                                         <td className="px-6 py-2 whitespace-nowrap">
                                             {log.practice ? (
@@ -908,6 +1004,29 @@ const QigongCalculator = () => {
                                         </td>
                                         <td className="px-6 py-2 whitespace-nowrap font-medium text-stone-800">
                                             {log.energy}
+                                        </td>
+                                        {/* Cell for the delete button - centered, matched padding */}
+                                        <td className="px-6 py-2 whitespace-nowrap text-center align-middle">
+                                            <button
+                                                onClick={() =>
+                                                    handleDeleteDay(
+                                                        log.day,
+                                                        index
+                                                    )
+                                                }
+                                                className={`p-1 rounded text-red-500 hover:text-red-700 transition-opacity duration-150 ease-in-out ${
+                                                    hoveredRowDay === log.day
+                                                        ? "opacity-75 hover:opacity-100"
+                                                        : "opacity-0 pointer-events-none"
+                                                }`}
+                                                title={`Delete Day ${log.day}`}
+                                                // Disable button interaction if not visible to be safe
+                                                disabled={
+                                                    hoveredRowDay !== log.day
+                                                }
+                                            >
+                                                🗑️
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
