@@ -786,7 +786,7 @@ const QigongCalculator = () => {
                                         Minutes
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Energy Change
+                                        Energy Multiplier
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Total Energy
@@ -875,24 +875,27 @@ const QigongCalculator = () => {
                                         <td className="px-6 py-2 whitespace-nowrap">
                                             {log.practice ? (
                                                 <span
-                                                    className="text-green-600"
-                                                    title={`Growth factor: ${log.growthFactor?.toFixed(
-                                                        6
-                                                    )}x`}
+                                                    className="text-blue-600"
+                                                    title={`Actual gain: +${log.gain?.toFixed(
+                                                        2
+                                                    )} energy`}
                                                 >
-                                                    +{log.gain?.toFixed(2)}
+                                                    {log.growthFactor
+                                                        ? `${log.growthFactor.toFixed(
+                                                              4
+                                                          )}x`
+                                                        : "N/A"}
                                                 </span>
                                             ) : (
-                                                <span className="text-red-600">
-                                                    -{log.loss?.toFixed(2)}
-                                                    <span className="text-xs ml-1 text-gray-500">
-                                                        (
-                                                        {(
-                                                            dailyEnergyLoss *
-                                                            100
-                                                        ).toFixed(0)}
-                                                        %)
-                                                    </span>
+                                                <span
+                                                    className="text-gray-500"
+                                                    title={`Lost: ${log.loss?.toFixed(
+                                                        2
+                                                    )} energy (${(
+                                                        dailyEnergyLoss * 100
+                                                    ).toFixed(0)}%)`}
+                                                >
+                                                    N/A
                                                 </span>
                                             )}
                                         </td>
