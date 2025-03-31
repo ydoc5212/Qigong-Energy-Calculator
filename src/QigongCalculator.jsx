@@ -397,35 +397,87 @@ const QigongCalculator = () => {
     };
 
     // Recalculate energy levels from a specific day forward
-    /* // Temporarily disabled for Supabase integration
-    const recalculateEnergyFromDay = (startIndex, updatedLog) => {
-        let recalculatedLog = [...updatedLog];
+    // Handles both local state and Supabase updates
+    const recalculateEnergyFromDay = async (startIndex, logData) => {
+        setIsLoading(true);
+        let recalculatedLog = [...logData]; // Use the passed log data
+        let updatesForSupabase = [];
+
+        // Get the energy level from the day *before* the startIndex
         let previousDayEnergy =
             startIndex > 0 ? recalculatedLog[startIndex - 1].energy : 1;
+
         for (let i = startIndex; i < recalculatedLog.length; i++) {
-            let currentEntry = { ...recalculatedLog[i] };
+            let currentEntry = { ...recalculatedLog[i] }; // Create a mutable copy
             let startEnergyForDay = previousDayEnergy;
+
             if (currentEntry.practice) {
                 const growthFactor = calculateGrowthFactor(
                     currentEntry.minutes
                 );
                 const newEnergy = startEnergyForDay * growthFactor;
                 const energyGain = newEnergy - startEnergyForDay;
+
+                // Update entry for local state & Supabase
                 currentEntry.energy = parseFloat(newEnergy.toFixed(2));
                 currentEntry.gain = parseFloat(energyGain.toFixed(2));
                 currentEntry.growthFactor = parseFloat(growthFactor.toFixed(6));
-                currentEntry.loss = undefined;
+                currentEntry.loss = null; // Reset loss if it was previously skipped
             } else {
+                // If a day was skipped, recalculate loss based on potentially changed previous day energy
                 const energyLoss = startEnergyForDay * dailyEnergyLoss;
                 const newEnergy = startEnergyForDay - energyLoss;
+
+                // Update entry for local state & Supabase
                 currentEntry.energy = parseFloat(newEnergy.toFixed(2));
                 currentEntry.loss = parseFloat(energyLoss.toFixed(2));
-                currentEntry.gain = undefined;
-                currentEntry.growthFactor = undefined;
+                currentEntry.gain = null; // Reset gain
+                currentEntry.growthFactor = null; // Reset growthFactor
             }
-            recalculatedLog[i] = currentEntry;
-            previousDayEnergy = currentEntry.energy;
+
+            recalculatedLog[i] = currentEntry; // Update the local array copy
+            updatesForSupabase.push(currentEntry); // Add to batch update
+            previousDayEnergy = currentEntry.energy; // Set energy for next iteration
         }
+
+        // --- Update Supabase ---
+        if (updatesForSupabase.length > 0) {
+            console.log(
+                "Batch updating Supabase with recalculated data:",
+                updatesForSupabase
+            );
+            try {
+                const { data, error } = await supabase
+                    .from("calculations")
+                    .upsert(updatesForSupabase, { onConflict: "day" });
+
+                if (error) {
+                    console.error(
+                        "Error batch updating Supabase after edit:",
+                        error
+                    );
+                    alert(
+                        "Failed to save recalculations to the database. Please check console and refresh."
+                    );
+                    setIsLoading(false);
+                    return; // Stop if Supabase update fails
+                }
+                console.log("Supabase batch update successful:", data);
+            } catch (error) {
+                console.error(
+                    "Unexpected error during Supabase batch update:",
+                    error
+                );
+                alert(
+                    "An unexpected error occurred while saving recalculations."
+                );
+                setIsLoading(false);
+                return;
+            }
+        }
+        // ---------------------
+
+        // Update local state only after successful Supabase update
         setDailyLog(recalculatedLog);
 
         // Update currentEnergy based on the energy level at the END of the day *before* the current UI day
@@ -440,38 +492,55 @@ const QigongCalculator = () => {
             (log) => log.day === currentDay
         );
         setCurrentEnergy(currentDayLog?.energy ?? energyBeforeCurrentDay);
+        setIsLoading(false);
     };
-    */
 
     // Handle editing minutes for a past day
-    /* // Temporarily disabled for Supabase integration
-    const handleEditMinutes = (day, newMinutesStr) => {
+    const handleEditMinutes = async (day, newMinutesStr) => {
         const newMinutes = parseInt(newMinutesStr, 10);
+
+        // Basic validation
         if (isNaN(newMinutes) || newMinutes < 0) {
-            // Optionally provide feedback about invalid input
-            console.warn("Invalid minutes entered");
-            // Potentially revert the input visually or keep the edit state active
+            console.warn("Invalid minutes entered:", newMinutesStr);
+            // Maybe add user feedback here, e.g., reset input or show alert
+            setEditingDay(null); // Exit editing mode on invalid input
             return;
         }
 
         const targetIndex = dailyLog.findIndex((log) => log.day === day);
-        if (targetIndex === -1) return; // Day not found
+        if (targetIndex === -1) {
+            console.error("Edited day not found in log:", day);
+            setEditingDay(null);
+            return;
+        }
 
-        // Create a new log with the updated minutes
-        const updatedLog = dailyLog.map((log, index) => {
+        // Ensure we are editing a practice day's minutes
+        if (!dailyLog[targetIndex].practice) {
+            console.warn("Cannot edit minutes for a skipped day.");
+            setEditingDay(null);
+            return;
+        }
+
+        // Avoid recalculation if minutes haven't changed
+        if (dailyLog[targetIndex].minutes === newMinutes) {
+            setEditingDay(null); // Just exit editing mode
+            return;
+        }
+
+        // Create an updated log copy *before* recalculation for the function
+        const logCopyWithEdit = dailyLog.map((log, index) => {
             if (index === targetIndex) {
-                // Ensure it was a practice day; editing skipped days doesn't make sense here
-                if (!log.practice) return log;
                 return { ...log, minutes: newMinutes };
             }
             return log;
         });
 
-        // Recalculate from the edited day onwards
-        recalculateEnergyFromDay(targetIndex, updatedLog);
-        setEditingDay(null); // Exit editing mode
+        // Recalculate starting from the edited day
+        // This function now handles Supabase updates internally
+        await recalculateEnergyFromDay(targetIndex, logCopyWithEdit);
+
+        setEditingDay(null); // Exit editing mode after successful recalculation and save
     };
-    */
 
     // Determine if any practice has happened today (used for button logic)
     const hasPracticedToday = dailyLog.some(
@@ -750,7 +819,53 @@ const QigongCalculator = () => {
                                         </td>
                                         <td className="px-6 py-2 whitespace-nowrap">
                                             {log.practice ? (
-                                                <span>{log.minutes}</span> // Always display static minutes
+                                                editingDay === log.day ? (
+                                                    <input
+                                                        type="number"
+                                                        defaultValue={
+                                                            log.minutes
+                                                        }
+                                                        onBlur={(e) =>
+                                                            handleEditMinutes(
+                                                                log.day,
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        onKeyDown={(e) => {
+                                                            if (
+                                                                e.key ===
+                                                                "Enter"
+                                                            ) {
+                                                                handleEditMinutes(
+                                                                    log.day,
+                                                                    e.target
+                                                                        .value
+                                                                );
+                                                            }
+                                                            if (
+                                                                e.key ===
+                                                                "Escape"
+                                                            ) {
+                                                                setEditingDay(
+                                                                    null
+                                                                ); // Cancel edit
+                                                            }
+                                                        }}
+                                                        className="w-16 text-center rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-1"
+                                                        autoFocus // Focus the input when it appears
+                                                    />
+                                                ) : (
+                                                    <span
+                                                        onClick={() =>
+                                                            setEditingDay(
+                                                                log.day
+                                                            )
+                                                        }
+                                                        className="cursor-pointer hover:text-blue-600" // Restore className
+                                                    >
+                                                        {log.minutes}
+                                                    </span>
+                                                )
                                             ) : (
                                                 <span className="text-gray-500">
                                                     0
