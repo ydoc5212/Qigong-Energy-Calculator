@@ -645,6 +645,18 @@ const QigongCalculator = () => {
         (log) => log.day === currentDay && log.practice
     );
 
+    // Helper function to calculate date based on day number
+    const getDateForDay = (day) => {
+        const startDate = new Date("2025-03-29"); // Day 1 is March 29, 2025 (calculated as 39 days before May 7, 2025)
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + (day - 1));
+        return date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+        });
+    };
+
     // Render loading state
     if (isLoading) {
         return <div className="p-4">Loading practice history...</div>;
@@ -874,6 +886,9 @@ const QigongCalculator = () => {
                                         Day
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">
+                                        Date
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">
                                         Activity
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider w-24">
@@ -908,6 +923,11 @@ const QigongCalculator = () => {
                                     >
                                         <td className="px-6 py-2 whitespace-nowrap text-stone-700">
                                             <span>{log.day}</span>
+                                        </td>
+                                        <td className="px-6 py-2 whitespace-nowrap text-stone-700">
+                                            <span>
+                                                {getDateForDay(log.day)}
+                                            </span>
                                         </td>
                                         <td className="px-6 py-2 whitespace-nowrap">
                                             {log.practice ? (
