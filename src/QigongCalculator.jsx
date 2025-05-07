@@ -647,7 +647,7 @@ const QigongCalculator = () => {
 
     // Helper function to calculate date based on day number
     const getDateForDay = (day) => {
-        const startDate = new Date("2025-03-29"); // Day 1 is March 29, 2025 (calculated as 39 days before May 7, 2025)
+        const startDate = new Date("2025-03-30"); // Day 1 is March 30, 2025 (shifted forward by 1 day)
         const date = new Date(startDate);
         date.setDate(startDate.getDate() + (day - 1));
         return date.toLocaleDateString("en-US", {
